@@ -3,6 +3,7 @@ package org.natemago.beats.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.natemago.beats.server.data.Message;
 import org.natemago.beats.server.data.SensorData;
 
-class DispatcherServlet extends HttpServlet{
+public class DispatcherServlet extends HttpServlet{
 	
 	/**
 	 * 
@@ -23,21 +24,28 @@ class DispatcherServlet extends HttpServlet{
 	private Map<String, Message> channels = new HashMap<String, Message>();
 	
 	private static final long serialVersionUID = -2077431212847632912L;
+	
+	private int seq = 0;
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		
+		String path = getRequestPath(req);
+		if(path.startsWith("/poll/")){
+			poll(req, resp);
+		}else if(path.startsWith("/sub/")){
+			processNewChannel(req, resp);
+		}
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		
+		publishMessage(req, resp);
 	}
 	
-	private void processNewChannel(HttpServletRequest req, HttpServletResponse resp){
-		
+	private void processNewChannel(HttpServletRequest req, HttpServletResponse resp) throws IOException{
+		resp.getWriter().write( String.format("{\"channelId\":\"%s\", \"info\":{}}", getChannelID()) );
 	}
 	
 	private void publishMessage(HttpServletRequest req, HttpServletResponse resp) throws IOException{
@@ -62,7 +70,39 @@ class DispatcherServlet extends HttpServlet{
 		}
 	}
 	
-	private void poll(HttpServletRequest req, HttpServletResponse resp){
-		
+	private void poll(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
+		String path = getRequestPath(req);
+		if(path.startsWith("/poll/")){
+			String cid = path.substring("/poll/".length());
+			Message m = null;
+			synchronized (this) {
+				m = channels.get(cid);
+			}
+			if(m != null){
+				resp.getWriter().write(  m.toJSON() );
+			}else{
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+				}
+				resp.getWriter().write("{}");
+			}
+		}else{
+			throw new ServletException("Invalid poll path");
+		}
+	}
+	
+	private synchronized String getChannelID(){
+		return "chanel-"+seq++;
+	}
+	
+	public static void main(String[] args) {
+		float [] a = new float []{1.3f,2.6f,7.9f};
+		System.out.println(Arrays.toString(a));
+	}
+	
+	private String getRequestPath(HttpServletRequest request){
+		String ctxPath = request.getContextPath();
+		return request.getRequestURI().substring(ctxPath.length());
 	}
 }

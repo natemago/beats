@@ -25,4 +25,14 @@
         
         r.clock.start();
    });
+   
+  chn = new beats.channel.DataChannel({
+	  base:'/beats-server',
+	  name: 'player-0'
+  });  
+  
+  chn.open();
+  chn.read(function(m){
+	  console.log('read');
+  });
 })(jQuery);

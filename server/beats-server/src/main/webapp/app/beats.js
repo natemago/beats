@@ -21,6 +21,7 @@
             
         },
         __call: function(url, method, data, success, error){
+        	var self = this;
             $.ajax({
                 url: this.base + '/' + (url || ''),
                 type: method, // FIXME
@@ -69,13 +70,13 @@
                 if(callback){
                     callback.call(self, confirm.info);
                 }
-                this.__loop();
+                this.__loop(callback);
             }, function(){});
         },
         close: function(){
             this.ableToRead = false;
         },
-        __loop: function(){
+        __loop: function(callback){
             var self = this;
             if(this.ableToRead){
                 this.get('poll/' + this.id, {}, function(resp){
