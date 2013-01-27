@@ -37,7 +37,7 @@ public class Message {
 			}
 		}
 		dataStr += "]";
-		String json = String.format("{channel:%s,timestamp:%d,data:%s}", channel,timestamp, dataStr);
+		String json = String.format("{\"channel\":\"%s\",\"timestamp\":%d,\"data\":%s}", channel,timestamp, dataStr);
 		return json;
 	}
 	

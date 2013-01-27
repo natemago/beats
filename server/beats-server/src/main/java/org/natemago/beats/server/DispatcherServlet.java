@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -54,6 +56,7 @@ public class DispatcherServlet extends HttpServlet{
 		String line = br.readLine();
 		m.setChannel(line.trim());
 		m.setTimestamp(System.currentTimeMillis());
+		List<SensorData> dataLst = new LinkedList<SensorData>();
 		while((line = br.readLine()) != null){
 			SensorData sd = new SensorData();
 			String [] vals = line.trim().split(",");
@@ -64,10 +67,13 @@ public class DispatcherServlet extends HttpServlet{
 				values[i-2] = Float.parseFloat(vals[i]);
 			}
 			sd.setValues(values);
+			dataLst.add(sd);
 		}
+		m.setData(dataLst.toArray(new SensorData[]{}));
 		synchronized (this) {
 			channels.put(m.getChannel(), m);
 		}
+		System.out.println("Received: " + m.toJSON());
 	}
 	
 	private void poll(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
@@ -77,6 +83,7 @@ public class DispatcherServlet extends HttpServlet{
 			Message m = null;
 			synchronized (this) {
 				m = channels.get(cid);
+				channels.put(cid, null);
 			}
 			if(m != null){
 				resp.getWriter().write(  m.toJSON() );

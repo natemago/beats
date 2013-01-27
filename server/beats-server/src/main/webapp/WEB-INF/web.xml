@@ -15,7 +15,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>PubSubServlet</servlet-name>
-    <url-pattern>/pub/*</url-pattern>
+    <url-pattern>/pub</url-pattern>
     <url-pattern>/sub/*</url-pattern>
     <url-pattern>/poll/*</url-pattern>
   </servlet-mapping>

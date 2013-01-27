@@ -28,15 +28,24 @@
                 data: data,
                 dataType: this.dataType || 'json',
                 success: function(resp){
-                    if(success){
-                        success.call(self, resp);
+                	var res = undefined;
+                	try{
+                		res = JSON.parse(resp);
+                	}catch(e){
+                		if(error){
+                			error.call(self, 'Parser Error', e.message, e);
+                		}
+                	}
+                    if(success && res){
+                        success.call(self, res);
                     }
                 },
                 error: function(errorText, err, jqxr){
                     if(error){
                         error.call(self, errorText, err, jqxr);
                     }
-                }
+                },
+                cache: false
             });
         },
         get: function(url, data, success, error){
@@ -63,6 +72,7 @@
             this.handlers.push(callback);
         },
         open: function(callback){
+            
             var self = this;
             this.get('sub/' + this.name, {}, function(confirm){
                 this.channelId = confirm.channelId;
@@ -78,19 +88,66 @@
         },
         __loop: function(callback){
             var self = this;
+            
             if(this.ableToRead){
-                this.get('poll/' + this.id, {}, function(resp){
+                this.get('poll/' + this.name, {}, function(resp){ // no chanel id
+                	
                     self.__loop(callback);
-                    if(resp.messages){
+                    if(resp.data){
                         libDraw.each(self.handlers, function(hnd){
-                            hnd.call(this, resp.messages);
+                            hnd.call(this, resp.data);
                         }, self);
                     }
-                }, function(){});
+                }, function(a,b,c){
+                	console.log('error',a,b,c);
+                });
             }
         }
     });
     
+    
+    var Ball = function(config){
+    	Ball.superclass.constructor.call(this, config);
+    };
+    
+    libDraw.ext(Ball, Base);
+    libDraw.ext(Ball, {
+    	move: function(toPoint, m, onDone){
+    		if(!this.moving){
+    			console.log('move', toPoint, m);
+    			this.target = {
+    					point: toPoint,
+    					m: m,
+    					callback: onDone
+    			};
+    			this.moving = true;
+    		}
+    	},
+    	draw: function(g){
+    		if(this.moving){
+	    		var xd=false,yd=false;
+	    		if(this.x >= this.target.point.x){
+	    			this.x = this.target.point.x;
+	    			xd=true;
+	    		}
+	    		if(this.y >= this.target.point.y){
+	    			this.y = this.target.point.y;
+	    			yd=true;
+	    		}
+	    		if(xd && yd){
+	    			this.moving = false;
+	    			this.target.callback.call(this);
+	    		}else{
+	    			this.x += this.target.m.dx;
+	        		this.y += this.target.m.dy;
+	    		}
+	    		this.target.m.dx /= 2;
+	    		this.target.m.dy /= 2;
+    		}
+    		g.fill(this.color);
+    		g.circle(this.x, this.y, this.r);
+    	}
+    });
     
     window.beats = {
         core: {
@@ -99,6 +156,9 @@
         },
         channel: {
             DataChannel: PollingChannel
+        },
+        objects: {
+        	Ball: Ball
         }
     };
     
