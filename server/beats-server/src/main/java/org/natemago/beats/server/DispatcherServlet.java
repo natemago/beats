@@ -73,7 +73,7 @@ public class DispatcherServlet extends HttpServlet{
 		synchronized (this) {
 			channels.put(m.getChannel(), m);
 		}
-		System.out.println("Received: " + m.toJSON());
+		//System.out.println("Received: " + m.toJSON());
 	}
 	
 	private void poll(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
